@@ -1,0 +1,13 @@
+{
+  "name": "law-check-server",
+  "version": "1.0.0",
+  "description": "法規·CHECK 건축 법령 검토 서버 (국가법령정보 API 연동)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

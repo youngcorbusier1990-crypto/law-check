@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>법규 체크 · 건축 현상설계 법령 검토 도구</title>
+<style>
+  :root{
+    --ink:#1a1c1a;
+    --ink-2:#54574f;
+    --ink-3:#8a8d82;
+    --paper:#f4f2ec;
+    --card:#fffefb;
+    --line:#e0ddd2;
+    --line-2:#cfccbe;
+    --blueprint:#1f3a5f;
+    --blueprint-2:#2d5580;
+    --seal:#b5462e;
+    --ok:#3d6b4a;
+    --warn:#a8781c;
+    --hit:#f7f4ea;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 16px 80px}
+
+  /* header */
+  header{
+    border-bottom:2px solid var(--ink);
+    padding:22px 16px 16px;
+    margin-bottom:0;
+    position:sticky;top:0;background:var(--paper);z-index:30;
+  }
+  header .inner{max-width:920px;margin:0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .logo{display:flex;align-items:baseline;gap:10px}
+  .logo .mark{
+    font-family:"Times New Roman",serif;font-weight:700;font-size:26px;letter-spacing:-1px;
+    color:var(--blueprint);
+  }
+  .logo .mark b{color:var(--seal)}
+  .logo .sub{font-size:12px;color:var(--ink-3);letter-spacing:0.5px}
+  .kicker{font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+  /* tabs */
+  nav.tabs{display:flex;gap:2px;max-width:920px;margin:0 auto;padding:0 16px;border-bottom:1px solid var(--line);position:sticky;top:66px;background:var(--paper);z-index:29}
+  nav.tabs button{
+    background:none;border:none;font-family:inherit;font-size:13.5px;color:var(--ink-3);
+    padding:11px 14px 10px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+    display:flex;align-items:center;gap:6px;
+  }
+  nav.tabs button.active{color:var(--ink);border-bottom-color:var(--seal);font-weight:600}
+  nav.tabs button:hover{color:var(--ink)}
+  nav.tabs .badge{background:var(--seal);color:#fff;border-radius:9px;font-size:10px;padding:0 5px;min-width:15px;text-align:center;font-variant-numeric:tabular-nums}
+
+  section.panel{display:none;padding-top:22px}
+  section.panel.active{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  h2.title{font-family:"Times New Roman",serif;font-size:19px;font-weight:700;color:var(--ink);margin-bottom:3px;display:flex;align-items:center;gap:8px}
+  h2.title .no{color:var(--seal);font-size:15px}
+  .lead{font-size:13px;color:var(--ink-2);margin-bottom:18px;max-width:640px}
+
+  /* form */
+  .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 16px}
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+
+  .land-search{background:linear-gradient(135deg,#f0f4f8,#faf8f2);border:1px solid var(--line-2);border-radius:10px;padding:16px;margin-bottom:20px}
+  .ls-title{font-size:15px;font-weight:700;color:var(--blueprint);margin-bottom:10px;display:flex;align-items:baseline;gap:8px}
+  .ls-sub{font-size:11px;font-weight:400;color:var(--ink-3)}
+  .land-row{display:flex;gap:8px;flex-wrap:wrap}
+  .addr-type{flex:0 0 90px;padding:9px;border:1px solid var(--line-2);border-radius:6px;background:var(--card);font-family:inherit;font-size:14px}
+  .land-row input{flex:1;min-width:180px;padding:9px 11px;border:1px solid var(--line-2);border-radius:6px;font-family:inherit;font-size:14px}
+  #btnSearchLand{flex:0 0 auto}
+  .land-result{margin-top:12px}
+  .land-card{background:var(--card);border:1px solid var(--blueprint);border-radius:8px;overflow:hidden}
+  .lc-head{background:var(--blueprint);color:#fff;padding:10px 14px;font-size:13px;font-weight:600}
+  .lc-body{padding:12px 14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(max-width:600px){.lc-body{grid-template-columns:1fr}}
+  .lc-item{border-left:2px solid var(--line-2);padding-left:10px}
+  .lc-item .k{font-size:11px;color:var(--ink-3)}
+  .lc-item .v{font-size:14px;color:var(--ink);font-weight:600;margin-top:1px}
+  .lc-item .v small{font-weight:400;color:var(--ink-2);font-size:11px}
+  .lc-item.hl{border-left-color:var(--seal)}
+  .lc-item.hl .v{color:var(--seal)}
+  .lc-apply{background:var(--hit);border-top:1px solid var(--line);padding:9px 14px;font-size:12px;color:var(--ok);display:flex;align-items:center;gap:6px}
+  .land-loading{padding:14px;text-align:center;color:var(--blueprint);font-size:13px;background:var(--card);border:1px solid var(--line);border-radius:8px;animation:pulse 1.4s ease-in-out infinite}
+  .land-err{padding:12px 14px;background:#fdf3f0;border:1px solid #e5c9bf;border-radius:8px;font-size:12.5px;color:var(--seal)}
+  .land-nokey{padding:12px 14px;background:var(--hit);border:1px dashed var(--ink-3);border-radius:8px;font-size:12px;color:var(--ink-2)}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field.full{grid-column:1/-1}
+  label{font-size:12px;color:var(--ink-2);font-weight:600;letter-spacing:0.2px}
+  label .hint{font-weight:400;color:var(--ink-3);margin-left:4px}
+  input,select{
+    font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line-2);
+    background:var(--card);border-radius:6px;color:var(--ink);width:100%;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--blueprint);box-shadow:0 0 0 3px rgba(31,58,95,.1)}
+  .unit-row{display:flex;gap:8px;align-items:center}
+  .unit-row input{flex:1}
+  .unit-row .u{font-size:12px;color:var(--ink-3);white-space:nowrap}
+
+  .btn{
+    font-family:inherit;font-size:14px;font-weight:600;padding:10px 20px;border-radius:6px;
+    border:1px solid var(--blueprint);background:var(--blueprint);color:#fff;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;transition:transform .05s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:transparent;color:var(--blueprint)}
+  .btn.seal{background:var(--seal);border-color:var(--seal)}
+  .btn.sm{padding:6px 13px;font-size:12.5px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}
+
+  /* result card */
+  .result-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    background:var(--blueprint);color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;margin-top:22px;
+  }
+  .result-head .h-name{font-family:"Times New Roman",serif;font-size:17px;font-weight:700}
+  .result-head .h-meta{font-size:12px;opacity:.85;margin-top:2px}
+  .result-head .scale-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600}
+  .export-bar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0 4px}
+
+  .law-group{background:var(--card);border:1px solid var(--line);border-top:none}
+  .law-group:last-child{border-radius:0 0 8px 8px}
+  .lg-head{display:flex;align-items:center;gap:9px;padding:11px 16px;background:var(--hit);border-bottom:1px solid var(--line);cursor:pointer}
+  .lg-head .cat{font-size:13px;font-weight:700;color:var(--blueprint)}
+  .lg-head .cnt{font-size:11px;color:var(--ink-3);margin-left:auto}
+  .law-item{padding:12px 16px 13px;border-bottom:1px solid var(--line)}
+  .law-item:last-child{border-bottom:none}
+  .li-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .li-art{font-size:13.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .li-src{font-size:11px;color:#fff;background:var(--ink-3);border-radius:4px;padding:1px 6px}
+  .li-src.act{background:var(--blueprint)}
+  .li-src.enf{background:var(--blueprint-2)}
+  .li-src.rule{background:#5a6b7a}
+  .li-src.ord{background:var(--seal)}
+  .li-src.other{background:var(--warn)}
+  .li-why{font-size:12px;color:var(--warn);margin-top:3px;display:flex;align-items:center;gap:5px}
+  .li-desc{font-size:12.5px;color:var(--ink-2);margin-top:5px}
+  .li-check{font-size:12px;color:var(--ok);margin-top:6px;background:#eef4ee;border-left:2px solid var(--ok);padding:5px 9px;border-radius:0 4px 4px 0}
+  .li-byuse{font-size:11.5px;color:var(--seal);margin-top:3px;font-weight:600}
+  .calc-note{font-size:12px;color:var(--ink-2);background:var(--hit);border:1px solid var(--line);border-radius:6px;padding:8px 11px;margin-bottom:12px}
+  .calc-note b{color:var(--blueprint)}
+
+  .laws-src{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-top:20px}
+  .ls-head{font-size:14px;font-weight:700;color:var(--blueprint);margin-bottom:10px}
+  .ls-grid{display:flex;flex-wrap:wrap;gap:7px}
+  .ls-item{font-size:12px;color:var(--blueprint);background:var(--hit);border:1px solid var(--line-2);border-radius:15px;padding:5px 12px;text-decoration:none;transition:all .1s}
+  .ls-item:hover{background:var(--blueprint);color:#fff;border-color:var(--blueprint)}
+
+  .ordin-src{background:#fbf6ef;border:1px solid var(--line);border-left:3px solid var(--seal);border-radius:0 8px 8px 0;padding:14px 16px;margin-top:16px}
+  .ordin-desc{font-size:12px;color:var(--ink-2);margin:6px 0 11px}
+  .ordin-desc b{color:var(--seal)}
+  .ordin-item{font-size:12px;color:var(--seal);background:#fff;border:1px solid #e5c9bf;border-radius:15px;padding:5px 12px;text-decoration:none;transition:all .1s}
+  .ordin-item:hover{background:var(--seal);color:#fff;border-color:var(--seal)}
+  .ordin-warn{font-size:11.5px;color:var(--ink-2);background:#fff;border:1px dashed var(--seal);border-radius:6px;padding:8px 11px;margin-top:10px}
+  .ordin-warn b{color:var(--seal)}
+
+  .live-ordin{margin:4px 0 12px}
+  .live-note{font-size:12px;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 12px}
+  .live-note.warn{border-color:var(--warn);background:#fdf8ee}
+  .live-note.warn b{color:var(--warn)}
+  .live-loading{font-size:12.5px;color:var(--blueprint);padding:10px 12px;background:#eef2f7;border-radius:6px;animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+  .live-group{background:#fff;border:1px solid var(--line);border-radius:7px;padding:9px 12px;margin-bottom:7px}
+  .live-gtitle{font-size:12px;font-weight:700;color:var(--blueprint);margin-bottom:6px}
+  .live-item{padding:6px 0;border-top:1px solid var(--line)}
+  .live-item:first-child{border-top:none}
+  .live-item b{display:block;font-size:13px;color:var(--ink)}
+  .live-item span{display:block;font-size:11px;color:var(--ink-3);margin-top:1px}
+  .live-item a{font-size:11.5px;color:var(--seal);text-decoration:none;margin-top:3px;display:inline-block}
+  .live-item a:hover{text-decoration:underline}
+  .live-item.err b,.live-item.warn b{color:var(--ink-3)}
+
+  .ord-block{background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 13px;margin-bottom:9px}
+  .ord-head{font-size:13px;font-weight:700;color:var(--blueprint);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .ord-head span{font-size:11px;font-weight:400;color:var(--ink-3)}
+  .ord-art{margin-bottom:9px;padding-left:9px;border-left:2px solid var(--seal)}
+  .ord-art:last-of-type{margin-bottom:6px}
+  .ord-artno{font-size:12.5px;font-weight:700;color:var(--seal);margin-bottom:2px}
+  .ord-artcontent{font-size:12px;color:var(--ink-2);line-height:1.55;white-space:normal}
+  .ord-empty{font-size:12px;color:var(--ink-3);padding:4px 0}
+  .ord-link{font-size:11.5px;color:var(--blueprint);text-decoration:none;display:inline-block;margin-top:4px}
+  .ord-link:hover{text-decoration:underline}
+
+  .ext-links{background:#f0f4f8;border:1px solid var(--line-2);border-radius:8px;padding:11px 13px;margin-top:8px}
+  .ext-head{font-size:12.5px;font-weight:700;color:var(--blueprint);margin-bottom:8px}
+  .ext-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0;border-top:1px solid var(--line)}
+  .ext-row:first-of-type{border-top:none}
+  .ext-nm{font-size:12px;color:var(--ink);flex:1;min-width:120px}
+  .ext-row a,.ext-foot a{font-size:11.5px;color:var(--blueprint);text-decoration:none;background:#fff;border:1px solid var(--line-2);border-radius:12px;padding:2px 9px;white-space:nowrap}
+  .ext-row a:hover,.ext-foot a:hover{background:var(--blueprint);color:#fff;border-color:var(--blueprint)}
+  .ext-foot{font-size:11px;color:var(--ink-3);margin-top:8px;padding-top:7px;border-top:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .ext-foot a{border:none;background:none;padding:0;color:var(--blueprint)}
+  .ext-foot a:hover{background:none;color:var(--seal);text-decoration:underline}
+
+  .zone-ordin-box{margin-bottom:12px}
+  .zone-note{font-size:12px;color:var(--ink-2);background:var(--hit);border:1px solid var(--line);border-radius:6px;padding:8px 11px}
+  .zone-note.warn{border-color:var(--warn);background:#fdf8ee}
+  .zone-note b{color:var(--seal)}
+  .zone-loading{font-size:12px;color:var(--blueprint);background:#eef2f7;border-radius:6px;padding:9px 11px;animation:pulse 1.4s ease-in-out infinite}
+  .zone-ord{background:#fff;border:1px solid var(--blueprint);border-radius:8px;padding:11px 13px}
+  .zone-ord-head{font-size:13px;font-weight:700;color:var(--blueprint);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .zone-ord-art{margin-bottom:8px;padding-left:9px;border-left:2px solid var(--seal)}
+  .zone-ord-no{font-size:12.5px;font-weight:700;color:var(--seal);margin-bottom:2px}
+  .zone-ord-content{font-size:11.5px;color:var(--ink-2);line-height:1.55}
+  .zone-ord-link{font-size:11.5px;color:var(--blueprint);text-decoration:none;display:inline-block;margin-top:4px}
+  .zone-ord-link:hover{text-decoration:underline}
+
+  .work-checks{display:flex;flex-wrap:wrap;gap:8px}
+  .work-chk{display:inline-flex;align-items:center;gap:5px;font-size:13.5px;color:var(--ink);background:var(--card);border:1px solid var(--line-2);border-radius:7px;padding:7px 11px;cursor:pointer;user-select:none}
+  .work-chk:hover{border-color:var(--blueprint)}
+  .work-chk input{width:16px;height:16px;accent-color:var(--blueprint);cursor:pointer;margin:0}
+  .work-chk:has(input:checked){background:#eef2f7;border-color:var(--blueprint);color:var(--blueprint);font-weight:600}
+
+  .district-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;max-height:none}
+  .dist-chk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink);background:var(--card);border:1px solid var(--line-2);border-radius:6px;padding:6px 9px;cursor:pointer;user-select:none}
+  .dist-chk:hover{border-color:var(--blueprint)}
+  .dist-chk input{width:15px;height:15px;accent-color:var(--seal);cursor:pointer;margin:0;flex:0 0 auto}
+  .dist-chk:has(input:checked){background:#fbf0ec;border-color:var(--seal);color:var(--seal);font-weight:600}
+  @media(max-width:600px){.district-checks{grid-template-columns:repeat(2,1fr)}}
+  .li-link{font-size:11.5px;color:var(--blueprint);text-decoration:none;margin-top:6px;display:inline-flex;align-items:center;gap:4px}
+  .li-link:hover{text-decoration:underline}
+
+  .empty{text-align:center;padding:48px 20px;color:var(--ink-3)}
+  .empty .big{font-family:"Times New Roman",serif;font-size:40px;color:var(--line-2);margin-bottom:8px}
+
+  /* checklist */
+  .ck-item{display:flex;gap:11px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:7px;margin-bottom:8px;align-items:flex-start}
+  .ck-item.done{background:var(--hit);border-color:var(--line)}
+  .ck-item input[type=checkbox]{width:19px;height:19px;margin-top:2px;flex-shrink:0;accent-color:var(--ok);cursor:pointer}
+  .ck-body{flex:1;min-width:0}
+  .ck-title{font-size:14px;color:var(--ink);font-weight:600}
+  .ck-item.done .ck-title{text-decoration:line-through;color:var(--ink-3)}
+  .ck-note{font-size:12px;color:var(--ink-2);margin-top:2px}
+  .ck-tag{font-size:10.5px;color:var(--ink-3);border:1px solid var(--line-2);border-radius:4px;padding:1px 6px;margin-top:5px;display:inline-block}
+  .ck-progress{height:7px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0 20px}
+  .ck-progress i{display:block;height:100%;background:var(--ok);transition:width .3s}
+
+  /* saved projects */
+  .proj-card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .proj-card .p-name{font-family:"Times New Roman",serif;font-size:15px;font-weight:700}
+  .proj-card .p-meta{font-size:12px;color:var(--ink-3);margin-top:2px}
+  .proj-actions{display:flex;gap:7px;flex-shrink:0}
+  .icon-btn{background:none;border:1px solid var(--line-2);border-radius:6px;width:32px;height:32px;cursor:pointer;color:var(--ink-2);font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+  .icon-btn:hover{border-color:var(--blueprint);color:var(--blueprint)}
+  .icon-btn.del:hover{border-color:var(--seal);color:var(--seal)}
+
+  /* law search */
+  .search-box{display:flex;gap:8px;margin-bottom:16px}
+  .search-box input{flex:1}
+  .sr-item{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:12px 15px;margin-bottom:8px}
+  .sr-hl{background:#fbe7b8;padding:0 1px;border-radius:2px}
+
+  .note-box{background:var(--hit);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 6px 6px 0;padding:11px 14px;font-size:12px;color:var(--ink-2);margin-top:18px}
+  .note-box b{color:var(--ink)}
+
+  .calc-wrap{background:var(--card);border:1px solid var(--blueprint);border-radius:8px;margin-top:20px;overflow:hidden}
+  .calc-head{background:var(--blueprint);color:#fff;padding:11px 16px;font-size:14px;font-weight:700;display:flex;align-items:baseline;gap:8px}
+  .calc-head span{font-size:11px;font-weight:400;opacity:.8}
+  .calc-body{padding:14px 16px}
+  .calc-row{margin-bottom:11px}
+  .calc-row label{display:block;margin-bottom:5px}
+  .calc-out{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .co-item{background:#eef2f7;border-left:3px solid var(--blueprint);border-radius:0 6px 6px 0;padding:9px 13px}
+  .co-item b{display:block;font-size:14px;color:var(--blueprint);font-variant-numeric:tabular-nums}
+  .co-item span{display:block;font-size:11.5px;color:var(--ink-2);margin-top:2px}
+  .co-item.muted{border-left-color:var(--ink-3);background:var(--hit)}
+  .co-item.muted b{color:var(--ink-2)}
+
+  /* width calc */
+  .w-card{background:var(--card);border:1px solid var(--line);border-radius:8px;margin-bottom:14px;overflow:hidden}
+  .w-head{background:var(--blueprint);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:9px}
+  .w-head .wt{font-family:"Times New Roman",serif;font-size:15px;font-weight:700}
+  .w-head .wa{font-size:11px;opacity:.85;margin-left:auto}
+  .w-big{font-size:30px;font-weight:700;color:var(--blueprint);font-variant-numeric:tabular-nums;padding:16px 16px 4px}
+  .w-big .u{font-size:15px;color:var(--ink-3);font-weight:400;margin-left:3px}
+  .w-body{padding:0 16px 15px}
+  .w-cond{font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+  .w-spec{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .w-spec span{font-size:12px;color:var(--ink-2);background:var(--hit);border:1px solid var(--line);border-radius:5px;padding:3px 10px}
+  .w-spec b{color:var(--blueprint)}
+  .w-common{list-style:none;padding:0;margin:6px 0 0}
+  .w-common li{font-size:12px;color:var(--ink-2);padding:4px 0 4px 16px;position:relative}
+  .w-common li:before{content:"·";position:absolute;left:4px;color:var(--seal);font-weight:700}
+  .w-input{display:flex;gap:8px;align-items:center;background:var(--hit);border:1px solid var(--line);border-radius:7px;padding:11px 14px;margin-bottom:14px;flex-wrap:wrap}
+  .w-input label{font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .w-input input{width:110px}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:100}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .api-status{font-size:11px;padding:3px 9px;border-radius:12px;border:1px solid var(--line-2);color:var(--ink-3);display:inline-flex;align-items:center;gap:5px}
+  .api-status i{width:7px;height:7px;border-radius:50%;background:var(--ink-3);display:inline-block}
+  .api-status.on i{background:var(--ok)}
+</style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <div class="logo">
+      <span class="mark">法規<b>·</b>CHECK</span>
+      <span class="sub">건축 현상설계 법령 검토</span>
+    </div>
+    <span class="kicker" id="clock"></span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="input"><span>① 규모 입력</span></button>
+  <button class="tab-btn" data-tab="result"><span>② 적용 법조항</span><span class="badge" id="resBadge" style="display:none">0</span></button>
+  <button class="tab-btn" data-tab="check"><span>③ 체크리스트</span></button>
+  <button class="tab-btn" data-tab="search"><span>④ 조문 검색</span></button>
+  <button class="tab-btn" data-tab="width"><span>⑤ 유효폭 산정</span></button>
+  <button class="tab-btn" data-tab="saved"><span>⑥ 프로젝트</span></button>
+</nav>
+
+<div class="wrap">
+
+  <!-- ① INPUT -->
+  <section class="panel active" id="tab-input">
+    <h2 class="title"><span class="no">01</span> 대지 정보 · 규모 입력</h2>
+    <p class="lead">대지 주소를 검색하면 용도지역·지역지구·건폐율·용적률 상한을 자동으로 불러옵니다. 이어서 건축물 용도·규모를 입력하면 적용 법조항을 판별합니다.</p>
+
+    <div class="land-search">
+      <div class="ls-title">🗺️ 대지 주소 검색 <span class="ls-sub">토지이음 정보 자동 조회</span></div>
+      <div class="land-row">
+        <select id="f_addrtype" class="addr-type">
+          <option value="parcel">지번</option>
+          <option value="road">도로명</option>
+        </select>
+        <input id="f_address" placeholder="예: 서울특별시 종로구 세종로 1  또는  세종대로 175" onkeydown="if(event.key==='Enter')searchLand()">
+        <button class="btn" id="btnSearchLand" onclick="searchLand()">대지 검색</button>
+      </div>
+      <div id="landResult" class="land-result"></div>
+    </div>
+
+    <div style="margin-bottom:12px"><span id="zoneBadge" class="api-status on" style="display:none"></span></div>
+    <div id="zoneOrdinBox" class="zone-ordin-box"></div>
+
+    <div class="form-grid">
+      <div class="field full">
+        <label>프로젝트명 <span class="hint">현상설계 공모명 또는 대지 위치</span></label>
+        <input id="f_name" placeholder="예: OO시 복합문화센터 현상설계">
+      </div>
+      <div class="field">
+        <label>주 용도 <span class="hint">가장 큰 용도</span></label>
+        <select id="f_use"><option value="">— 선택 —</option></select>
+      </div>
+      <div class="field">
+        <label>추가 용도 <span class="hint">복합건물이면 선택</span></label>
+        <select id="f_use2"><option value="">— 없음 —</option></select>
+      </div>
+      <div class="field full" id="use3wrap" style="display:none">
+        <label>추가 용도 3 <span class="hint">더 있으면</span></label>
+        <select id="f_use3"><option value="">— 없음 —</option></select>
+      </div>
+      <div class="field">
+        <label>공사 종류 <span class="hint">해당 항목 모두 선택</span></label>
+        <div class="work-checks" id="f_work_group">
+          <label class="work-chk"><input type="checkbox" class="f_work_cb" value="new" checked>신축</label>
+          <label class="work-chk"><input type="checkbox" class="f_work_cb" value="ext">증축</label>
+          <label class="work-chk"><input type="checkbox" class="f_work_cb" value="remo">대수선</label>
+          <label class="work-chk"><input type="checkbox" class="f_work_cb" value="recon">개축·재축</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>연면적 <span class="hint">전체 바닥면적 합계</span></label>
+        <div class="unit-row"><input id="f_area" type="number" min="0" placeholder="0"><span class="u">㎡</span></div>
+      </div>
+      <div class="field">
+        <label>대지면적</label>
+        <div class="unit-row"><input id="f_lot" type="number" min="0" placeholder="0"><span class="u">㎡</span></div>
+      </div>
+      <div class="field">
+        <label>지상 층수</label>
+        <div class="unit-row"><input id="f_floors" type="number" min="0" placeholder="0"><span class="u">층</span></div>
+      </div>
+      <div class="field">
+        <label>지하 층수</label>
+        <div class="unit-row"><input id="f_base" type="number" min="0" placeholder="0"><span class="u">층</span></div>
+      </div>
+      <div class="field">
+        <label>건축물 높이</label>
+        <div class="unit-row"><input id="f_height" type="number" min="0" placeholder="0"><span class="u">m</span></div>
+      </div>
+      <div class="field">
+        <label>용도지역 <span class="hint">대지 검색 시 자동 · 직접 선택 가능</span></label>
+        <select id="f_landzone"><option value="">— 선택 —</option></select>
+      </div>
+      <div class="field full">
+        <label>지역·지구·구역 <span class="hint">해당 항목 모두 체크 (중복 규제)</span></label>
+        <div class="district-checks" id="f_zone_group"></div>
+      </div>
+      <div class="field full">
+        <label>지자체 <span class="hint">자치조례 확인용 · 선택</span></label>
+        <input id="f_gov" placeholder="예: 서울특별시 / 부산광역시 / OO군">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" id="btnAnalyze">법조항 자동 판별 →</button>
+      <button class="btn ghost sm" id="btnReset">초기화</button>
+    </div>
+
+    <div class="note-box">
+      <b>판별 로직 안내.</b> 이 도구는 건축법 및 시행령의 규모별 임계값(연면적, 층수, 높이, 용도)에 따라 적용 조항을 필터링합니다. 다만 지구단위계획·허가권자 해석·개별 조례는 지자체마다 다르므로, 최종 확인은 반드시 허가권자(시·군·구)에게 받으세요.
+    </div>
+  </section>
+
+  <!-- ② RESULT -->
+  <section class="panel" id="tab-result">
+    <h2 class="title"><span class="no">02</span> 적용 법조항</h2>
+    <p class="lead">입력한 규모에 따라 적용되는 조항입니다. 규모 때문에 <b>추가로 걸린 조항</b>은 사유를 함께 표시합니다.</p>
+    <div id="resultBody">
+      <div class="empty"><div class="big">◷</div>먼저 ① 규모 입력에서 정보를 입력하고<br>법조항 판별을 실행하세요.</div>
+    </div>
+  </section>
+
+  <!-- ③ CHECKLIST -->
+  <section class="panel" id="tab-check">
+    <h2 class="title"><span class="no">03</span> 검토 체크리스트</h2>
+    <p class="lead">판별된 조항에서 자동 생성된 체크 항목입니다. 항목을 완료하면 진행률에 반영되고 프로젝트에 저장됩니다.</p>
+    <div id="checkBody">
+      <div class="empty"><div class="big">☑</div>법조항을 먼저 판별하면<br>체크리스트가 자동 생성됩니다.</div>
+    </div>
+  </section>
+
+  <!-- ④ SEARCH -->
+  <section class="panel" id="tab-search">
+    <h2 class="title"><span class="no">04</span> 조문 검색</h2>
+    <p class="lead">내장된 조문 요약 데이터에서 키워드로 검색합니다. 국가법령정보 API 연동 시 전체 원문 검색으로 확장됩니다.</p>
+    <div class="search-box">
+      <input id="searchInput" placeholder="예: 감리 / 조경 / 피난 / 방화 / 주차">
+      <button class="btn sm" id="btnSearch">검색</button>
+    </div>
+    <div style="margin-bottom:14px"><span class="api-status" id="apiStatus"><i></i>API 미연동 · 내장 데이터 검색 중</span></div>
+    <div id="searchBody"></div>
+  </section>
+
+  <!-- ⑤ WIDTH -->
+  <section class="panel" id="tab-width">
+    <h2 class="title"><span class="no">05</span> 유효폭 산정</h2>
+    <p class="lead">용도·규모별 계단·복도·출구의 최소 유효너비를 자동 산정합니다. ① 규모 입력값을 그대로 사용하며, 개별 관람실 면적만 따로 넣으면 출구·접합복도 너비까지 계산됩니다. <b>피난방화규칙 제15조·제15조의2·제10조</b> 기준.</p>
+    <div id="widthBody">
+      <div class="empty"><div class="big">↔</div>① 규모 입력에서 용도·연면적·층수를 넣으면<br>유효폭이 자동 산정됩니다.</div>
+    </div>
+  </section>
+
+  <!-- ⑥ SAVED -->
+  <section class="panel" id="tab-saved">
+    <h2 class="title"><span class="no">06</span> 저장된 프로젝트</h2>
+    <p class="lead">규모 정보와 체크리스트 진행 상황을 함께 저장합니다. 팀 공유 시 내보내기(JSON)로 전달할 수 있습니다.</p>
+    <div class="btn-row" style="margin-top:0;margin-bottom:16px">
+      <button class="btn sm" id="btnSaveCur">현재 프로젝트 저장</button>
+      <button class="btn ghost sm" id="btnExport">전체 내보내기 (JSON)</button>
+      <label class="btn ghost sm" style="cursor:pointer">불러오기<input type="file" id="importFile" accept=".json" hidden></label>
+    </div>
+    <div id="savedBody"></div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="uses.js"></script>
+<script src="landuse.js"></script>
+<script src="rules.js"></script>
+<script src="api.js"></script>
+<script src="app_tail.js"></script>
+</body>
+</html>

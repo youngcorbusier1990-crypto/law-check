@@ -1,0 +1,14 @@
+# Render 배포 설정 (Blueprint)
+services:
+  - type: web
+    name: law-check
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: LAW_OC
+        sync: false     # 법령 조례 조회용 (법제처 open.law.go.kr)
+      - key: VWORLD_KEY
+        sync: false     # 대지정보 조회용 (브이월드 vworld.kr)
