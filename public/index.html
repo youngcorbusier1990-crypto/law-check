@@ -222,12 +222,17 @@
   .work-chk input{width:16px;height:16px;accent-color:var(--blueprint);cursor:pointer;margin:0}
   .work-chk:has(input:checked){background:#eef2f7;border-color:var(--blueprint);color:var(--blueprint);font-weight:600}
 
-  .district-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;max-height:none}
+  .district-checks{display:block}
+  .dist-subhead{font-size:12px;font-weight:700;color:var(--blueprint);margin-bottom:6px}
+  .dist-subhead span{font-weight:400;color:var(--ink-3);font-size:11px}
+  .dist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
   .dist-chk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink);background:var(--card);border:1px solid var(--line-2);border-radius:6px;padding:6px 9px;cursor:pointer;user-select:none}
   .dist-chk:hover{border-color:var(--blueprint)}
   .dist-chk input{width:15px;height:15px;accent-color:var(--seal);cursor:pointer;margin:0;flex:0 0 auto}
   .dist-chk:has(input:checked){background:#fbf0ec;border-color:var(--seal);color:var(--seal);font-weight:600}
-  @media(max-width:600px){.district-checks{grid-template-columns:repeat(2,1fr)}}
+  .dist-chk.is-zone input{accent-color:var(--blueprint)}
+  .dist-chk.is-zone:has(input:checked){background:#eef2f7;border-color:var(--blueprint);color:var(--blueprint)}
+  @media(max-width:600px){.dist-grid{grid-template-columns:repeat(2,1fr)}}
   .li-link{font-size:11.5px;color:var(--blueprint);text-decoration:none;margin-top:6px;display:inline-flex;align-items:center;gap:4px}
   .li-link:hover{text-decoration:underline}
 
@@ -393,12 +398,9 @@
         <label>건축물 높이</label>
         <div class="unit-row"><input id="f_height" type="number" min="0" placeholder="0"><span class="u">m</span></div>
       </div>
-      <div class="field">
-        <label>용도지역 <span class="hint">대지 검색 시 자동 · 직접 선택 가능</span></label>
-        <select id="f_landzone"><option value="">— 선택 —</option></select>
-      </div>
+      <select id="f_landzone" style="display:none"><option value="">— 선택 —</option></select>
       <div class="field full">
-        <label>지역·지구·구역 <span class="hint">해당 항목 모두 체크 (중복 규제)</span></label>
+        <label>지역·지구·구역 <span class="hint">용도지역은 1개, 용도지구·구역은 중복 체크 (토지이용계획확인서 기준)</span></label>
         <div class="district-checks" id="f_zone_group"></div>
       </div>
       <div class="field full">

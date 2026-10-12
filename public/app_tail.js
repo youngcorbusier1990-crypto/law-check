@@ -646,9 +646,43 @@ fillLandZoneSelect();
 function fillDistrictChecks(){
   const box = $("#f_zone_group");
   if(!box || typeof DISTRICT_LIST==='undefined') return;
-  box.innerHTML = DISTRICT_LIST.map(d=>
-    `<label class="dist-chk" title="${esc(d.desc)}"><input type="checkbox" class="f_zone_cb" value="${esc(d.code)}">${esc(d.label)}</label>`
-  ).join("");
+  const zones = DISTRICT_LIST.filter(d=>d.zone);
+  const districts = DISTRICT_LIST.filter(d=>!d.zone);
+  const chk = d => `<label class="dist-chk${d.zone?' is-zone':''}" title="${esc(d.desc)}"><input type="checkbox" class="f_zone_cb${d.zone?' zone-cb':''}" value="${esc(d.code)}">${esc(d.label)}</label>`;
+  box.innerHTML =
+    `<div class="dist-subhead">용도지역 <span>(하나만 선택 — 건폐율·용적률 결정)</span></div>`+
+    `<div class="dist-grid">${zones.map(chk).join("")}</div>`+
+    `<div class="dist-subhead" style="margin-top:12px">용도지구·구역 <span>(해당 항목 모두 체크 — 중복 규제)</span></div>`+
+    `<div class="dist-grid">${districts.map(chk).join("")}</div>`;
+  // 용도지역은 하나만 선택되도록(라디오처럼) + 선택 시 건폐율·용적률 반영
+  box.querySelectorAll(".zone-cb").forEach(cb=>{
+    cb.addEventListener("change", ()=>{
+      if(cb.checked){
+        box.querySelectorAll(".zone-cb").forEach(o=>{ if(o!==cb) o.checked=false; });
+        applyZoneFromCode(cb.value);
+      } else {
+        applyZoneFromCode("");
+      }
+    });
+  });
+}
+
+/* 용도지역 코드(z:계획관리지역)로 건폐율·용적률 반영 + 숨은 드롭다운 동기화 + 조례조회 */
+function applyZoneFromCode(code){
+  const name = code ? code.replace(/^z:/,"") : "";
+  const sel = $("#f_landzone");
+  if(sel) sel.value = name && (typeof LANDUSE_ZONES!=="undefined" && LANDUSE_ZONES[name]) ? name : "";
+  if(name && typeof LANDUSE_ZONES!=="undefined" && LANDUSE_ZONES[name]){
+    const zd = LANDUSE_ZONES[name];
+    window.__landZone = name; window.__landZoneData = zd;
+    const badge = $("#zoneBadge");
+    if(badge){ badge.style.display="inline-flex"; badge.textContent = `용도지역: ${name} (법정 상한 건폐율 ${zd.bcr}% · 용적률 ${zd.farMax}%)`; }
+    if(typeof fetchZoneOrdinance==="function") fetchZoneOrdinance(($("#f_gov").value||"").trim(), name);
+  } else {
+    window.__landZone = null; window.__landZoneData = null;
+    const badge = $("#zoneBadge"); if(badge) badge.style.display="none";
+    const zb = $("#zoneOrdinBox"); if(zb) zb.innerHTML="";
+  }
 }
 fillDistrictChecks();
 

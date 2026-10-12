@@ -287,9 +287,12 @@ function applyLandToForm(matchedZone, zoneData, zoneCode, address){
   window.__landZone = matchedZone || null;
   window.__landZoneData = zoneData || null;
 
-  // 용도지역 드롭다운도 자동 선택 (직접선택과 동기화)
+  // 용도지역 드롭다운(숨김) 동기화 + 용도지역 체크박스 자동 체크
   const lzSel = document.getElementById('f_landzone');
   if(lzSel && matchedZone) lzSel.value = matchedZone;
+  if(matchedZone){
+    document.querySelectorAll('.zone-cb').forEach(c=>{ c.checked = (c.value === 'z:'+matchedZone); });
+  }
 
   // 용도지역 배지를 규모입력 상단에 표시
   const badge = document.getElementById('zoneBadge');
